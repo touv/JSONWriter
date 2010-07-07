@@ -435,6 +435,8 @@ class JSONWriter
         if (!is_string($version)) return false;
         if (!is_string($encoding)) return false;
         if (!is_null($standalone) and !is_bool($standalone)) return false;
+
+
         $a =& $this->stack_push(__METHOD__);
 
         $a['version'] = $version;
