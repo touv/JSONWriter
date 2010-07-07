@@ -76,12 +76,12 @@ class JSONWriter
         if (is_resource($this->h)) fclose($this->h);
     }
 
-    protected function &stack_push($n)
+    protected function &stack_push($n, $a = array())
     {
         $i = count($this->stack);
         $this->stack[$i] = array(
             strtoupper(substr($n, 17)),
-            array()
+            $a
         );
         return $this->stack[$i][1];
     }
@@ -97,10 +97,10 @@ class JSONWriter
         return $r;
     }
 
-    protected function stack_end1()
+    protected function &stack_end1()
     {
-        list(,$r) = end($this->stack);
-        return $r;
+        $i = count($this->stack) - 1;
+        return $this->stack[$i][1];
     }
 
 
@@ -178,7 +178,6 @@ class JSONWriter
     {
         $this->_cb();
         $a = $this->stack_pop();
-        var_dump($a);
         return true;
     }
     /**
@@ -228,8 +227,10 @@ class JSONWriter
     function endElement()
     {
         $this->_cb();
-        $this->stack_pop();
-        $this->p = $this->stack_end1();
+        $z = $this->stack_pop();
+        $a =& $this->stack_end1();
+        $a[key($a)] = $z;
+        var_dump( $z,$a);
         return true;
     }
     /**
@@ -250,7 +251,6 @@ class JSONWriter
     {
         if (!is_bool($clear)) return false;
 
-        var_export($this->a);
         $this->b = rtrim($this->b, ',');
 
         if ($this->memory) return true;
@@ -330,6 +330,7 @@ class JSONWriter
         if (!is_null($uri) and !is_string($uri)) return false;
 
         if (strpos($this->stack_end0(), 'ELEMENT') !== 0) return false;
+
         $this->stack_push(__METHOD__);
 
         if (!is_null($uri)) {
@@ -373,32 +374,7 @@ class JSONWriter
         $this->stack_push(__METHOD__);
         return true;
     }
-    /**
-     *  — Crée un document
-     *  @return boolean
-     */
-    function startDocument($version = '1.0',  $encoding = 'utf-8', $standalone = null)
-    {
-        if (!is_string($version)) return false;
-        if (!is_string($encoding)) return false;
-        if (!is_null($standalone) and !is_bool($standalone)) return false;
-        $a =& $this->stack_push(__METHOD__);
-
-        $a['version'] = $version;
-        $a['encoding'] = $encoding;
-        if (!is_null($standalone)) {
-            $a['standalone'] = $standalone ?  'yes' : 'no';
-        }
-        $this->p = &$this->a;
-
-        $this->_ob();
-        $this->_kv('version', $version);
-        $this->_kv('encoding', $encoding);
-        if (!is_null($standalone)) {
-            $this->_kv('standalone', $standalone ?  'yes' : 'no');
-        }
-        return true;
-    }
+  
     /**
      *  — Crée une liste d'attributs pour la DTD
      *  @return boolean
@@ -451,6 +427,60 @@ class JSONWriter
         return false;
     }
     /**
+     *  — Crée un document
+     *  @return boolean
+     */
+    function startDocument($version = '1.0',  $encoding = 'utf-8', $standalone = null)
+    {
+        if (!is_string($version)) return false;
+        if (!is_string($encoding)) return false;
+        if (!is_null($standalone) and !is_bool($standalone)) return false;
+        $a =& $this->stack_push(__METHOD__);
+
+        $a['version'] = $version;
+        $a['encoding'] = $encoding;
+        if (!is_null($standalone)) {
+            $a['standalone'] = $standalone ?  'yes' : 'no';
+        }
+
+        $this->_ob();
+        $this->_kv('version', $version);
+        $this->_kv('encoding', $encoding);
+        if (!is_null($standalone)) {
+            $this->_kv('standalone', $standalone ?  'yes' : 'no');
+        }
+        return true;
+    }
+    /**
+     *  — Crée un élément
+     *  @return boolean
+     */
+    function startElement($name)
+    {
+        if (!is_string($name)) return false;
+
+        $a =& $this->stack_end1();
+
+        if (!isset($a[$name])) {
+            $a[$name] = array();
+            $this->stack_push(__METHOD__, $a[$name]);
+        }
+        elseif (!isset($a[$name][0])) {
+            $t = $a['name'];
+            $a[$name] = array($t);
+            $this->stack_push(__METHOD__, $a[$name][0]);
+        }
+        else {
+            $i = count($a[$name]);
+            $a[$name][$i] = array();
+            $this->stack_push(__METHOD__, $a[$name][$i]);
+        }
+
+        $this->_k($name);
+        $this->_ob();
+        return true;
+    }
+    /**
      *  — Crée un élément d'un espace de noms
      *  @return boolean
      */
@@ -463,23 +493,6 @@ class JSONWriter
         $this->_k($prefix.'$'.$name);
         $this->_ob();
         $this->_kv('xmlns$'.$prefix, $uri);
-        return true;
-    }
-    /**
-     *  — Crée un élément
-     *  @return boolean
-     */
-    function startElement($name)
-    {
-        if (!is_string($name)) return false;
-        $this->stack_push(__METHOD__);
-
-        if (!isset($this->p[$name])) {
-            $this->p[$name] = array();
-        }
-        $this->p =& $this->p[$name];
-        $this->_k($name);
-        $this->_ob();
         return true;
     }
     /**
@@ -503,7 +516,8 @@ class JSONWriter
         if ($this->mute) return true;
 
         if (strpos($this->stack_end0(), 'ELEMENT') === 0) {
-            $this->p['$t'] = $content;
+            $a =& $this->stack_end1();
+            $a['$t'] = $content;
             $this->_kv('$t', $content);
         }
         elseif (strpos($this->stack_end0(), 'ATTRIBUTE') === 0) {

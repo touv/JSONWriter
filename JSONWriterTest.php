@@ -28,30 +28,25 @@ class JSONWriterTest extends PHPUnit_Framework_TestCase
     {
         $this->assertTrue($this->j->openUri($this->uri));
     }
-//    function setIndent()
+//    function test_Document()
 //    {
-//        $this->j->setIndent(true);
-//        ...
+//        $this->assertTrue($this->j->openUri($this->uri));
+//        $this->assertTrue($this->j->startDocument('1.0', 'UTF-8'));
+//        $this->assertTrue($this->j->endDocument());
+//        $r = $this->flush_and_get();
+//        $this->assertEquals($r['version'], '1.0');
+//        $this->assertEquals($r['encoding'], 'UTF-8');
 //    }
-    function test_Document()
-    {
-        $this->assertTrue($this->j->openUri($this->uri));
-        $this->assertTrue($this->j->startDocument('1.0', 'UTF-8'));
-        $this->assertTrue($this->j->endDocument());
-        $r = $this->flush_and_get();
-        $this->assertEquals($r['version'], '1.0');
-        $this->assertEquals($r['encoding'], 'UTF-8');
-    }
-    function test_Element1()
-    {
-        $this->assertTrue($this->j->openUri($this->uri));
-        $this->assertTrue($this->j->startDocument('1.0', 'UTF-8'));
-        $this->assertTrue($this->j->startElement('Root'));
-        $this->assertTrue($this->j->endElement());
-        $this->assertTrue($this->j->endDocument());
-        $r = $this->flush_and_get();
-        $this->assertTrue(isset($r['Root']));
-    }
+//    function test_Element1()
+//    {
+//        $this->assertTrue($this->j->openUri($this->uri));
+//        $this->assertTrue($this->j->startDocument('1.0', 'UTF-8'));
+//        $this->assertTrue($this->j->startElement('Root'));
+//        $this->assertTrue($this->j->endElement());
+//        $this->assertTrue($this->j->endDocument());
+//        $r = $this->flush_and_get();
+//        $this->assertTrue(isset($r['Root']));
+//    }
     function test_Element2()
     {
         $this->assertTrue($this->j->openUri($this->uri));
