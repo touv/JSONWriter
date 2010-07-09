@@ -48,29 +48,16 @@
  */
 class JSONWriter
 {
-    protected $a = array();
-    protected $p;
+    protected $r = array();
     protected $h = null;
     protected $b = '';
-    protected $l = 0;
     protected $i = false;
     protected $is = "\t";
 
     protected $memory = false;
     protected $mute = false;
     protected $stack = array();
-    protected $target;
 
-
-    /**
-     * Constructeur
-     */
-    function __construct()
-    {
-    }
-    /**
-     * Constructeur
-     */
     function __destruct()
     {
         if (is_resource($this->h)) fclose($this->h);
@@ -103,55 +90,63 @@ class JSONWriter
         return $this->stack[$i][1];
     }
 
-
-    protected function _i($nl = true)
+    static protected function json_indent($json, $tab = "\t")
     {
-        if ($this->i) {
-            if ($nl) $this->b .= PHP_EOL;
-            for($i=0; $i < $this->l; $i++) $this->b .= $this->is;
+        $new_json = '';
+        $indent_level = 0;
+        $in_string = false;
+        $len = strlen($json);
+        for($c = 0; $c < $len; $c++) {
+            $char = $json[$c];
+            switch($char) {
+            case '{':
+            case '[':
+                if(!$in_string) {
+                    $new_json .= $char . "\n" . str_repeat($tab, $indent_level+1);
+                    $indent_level++;
+                }
+                else {
+                    $new_json .= $char;
+                }
+                break;
+            case '}':
+            case ']':
+                if(!$in_string) {
+                    $indent_level--;
+                    $new_json .= "\n" . str_repeat($tab, $indent_level) . $char;
+                }
+                else {
+                    $new_json .= $char;
+                }
+                break;
+            case ',':
+                if(!$in_string) {
+                    $new_json .= ",\n" . str_repeat($tab, $indent_level);
+                }
+                else {
+                    $new_json .= $char;
+                }
+                break;
+            case ':':
+                if(!$in_string) {
+                    $new_json .= ": ";
+                }
+                else {
+                    $new_json .= $char;
+                }
+                break;
+            case '"':
+                if($c > 0 && $json[$c-1] != '\\') {
+                    $in_string = !$in_string;
+                }
+            default:
+                $new_json .= $char;
+                break;                   
+            }
         }
+        return $new_json;
     }
-    protected function _ob()
-    {
-        ++$this->l;
-        $this->b .= '{';
-
-    }
-
-    protected function _cb()
-    {
-        --$this->l;
-        $this->b = rtrim($this->b, ',');
-        $this->_i();
-        $this->b .= '},';
-    }
-    protected function _k($n)
-    {
-        $this->_i();
-        $this->b .= json_encode($n);
-        $this->b .= ': ';
-    }
-    protected function _v($c)
-    {
-        $this->b .= json_encode($c);
-        $this->b .= ',';
-    }
-    protected function _kv($n, $c)
-    {
-        $this->_k($n);
-        $this->_v($c);
-    }
-
-
-    /**
-     * Termine un attribut
-     * @return boolean
-     */
-    function endAttribute()
-    {
-        $this->stack_pop();
-        return true;
-    }
+    
     /**
      *  — Termine un bloc CDATA
      *  @return boolean
@@ -167,7 +162,7 @@ class JSONWriter
     function endComment()
     {
         $this->mute = false;
-        $this->stack_pop();
+        $z = $this->stack_pop();
         return true;
     }
     /**
@@ -176,17 +171,52 @@ class JSONWriter
      */
     function endDocument()
     {
-        $this->_cb();
-        $a = $this->stack_pop();
+        $this->r = $this->stack_pop();
         return true;
     }
+    /**
+     *  — Termine l'élément courant
+     *  @return boolean
+     */
+    function endElement()
+    {
+        $z = $this->stack_pop();
+        $a =& $this->stack_end1();
+        $n = $z['$n'];
+        unset($z['$n']);
+        if (!isset($a[$n])) {
+            $a[$n] = $z;
+        }
+        elseif (key($a[$n]) !== 0) {
+            $b = $a[$n];
+            $a[$n] = array($b, $z);
+        }
+        else {
+            $i = count($a[$n]);
+            $a[$n][] = $z;
+        }
+        
+        return true;
+    }
+    /**
+     * Termine un attribut
+     * @return boolean
+     */
+    function endAttribute()
+    {
+        $z = $this->stack_pop();
+        $a =& $this->stack_end1();
+        $a[$z['$n']] = $z['$t'];
+        return true;
+    }
+
     /**
      *  — Termine la liste des attributs de la DTD courante
      *  @return boolean
      */
     function endDTDAttlist()
     {
-        $this->stack_pop();
+        $z = $this->stack_pop();
         trigger_error(__METHOD__.' is not implemented.', E_USER_WARNING);
         return false;
     }
@@ -196,7 +226,7 @@ class JSONWriter
      */
     function endDTDElement()
     {
-        $this->stack_pop();
+        $z = $this->stack_pop();
         trigger_error(__METHOD__.' is not implemented.', E_USER_WARNING);
         return false;
     }
@@ -206,7 +236,7 @@ class JSONWriter
      */
     function endDTDEntity()
     {
-        $this->stack_pop();
+        $z = $this->stack_pop();
         trigger_error(__METHOD__.' is not implemented.', E_USER_WARNING);
         return false;
     }
@@ -216,22 +246,9 @@ class JSONWriter
      */
     function endDTD()
     {
-        $this->stack_pop();
+        $z = $this->stack_pop();
         trigger_error(__METHOD__.' is not implemented.', E_USER_WARNING);
         return false;
-    }
-    /**
-     *  — Termine l'élément courant
-     *  @return boolean
-     */
-    function endElement()
-    {
-        $this->_cb();
-        $z = $this->stack_pop();
-        $a =& $this->stack_end1();
-        $a[key($a)] = $z;
-        var_dump( $z,$a);
-        return true;
     }
     /**
      *  — Termine le PI courant
@@ -239,9 +256,7 @@ class JSONWriter
      */
     function endPI()
     {
-        $this->stack_pop();
-        $this->target = '';
-        return true;
+        return $this->endElement();
     }
     /**
      *  — Affiche le buffer courant
@@ -251,12 +266,21 @@ class JSONWriter
     {
         if (!is_bool($clear)) return false;
 
-        $this->b = rtrim($this->b, ',');
+        if (is_null($this->stack_end0())) {
+            $this->b = json_encode($this->r);
+            if ($clear) $this->r = null;
+        }
+        else  {
+            return true; //TODO
+            $this->b = '';
+        }
+        if ($this->i) 
+            $this->b = self::json_indent($this->b, $this->is);
 
-        if ($this->memory) return true;
-        if (!is_resource($this->h)) return false;
+        if ($this->memory) return strlen($this->b);
+        if (!is_resource($this->h)) return false;        
         $r = fwrite($this->h, $this->b);
-        if ($clear) $this->b = '';
+
         return $r;
     }
     /**
@@ -320,43 +344,6 @@ class JSONWriter
         return true;
     }
     /**
-     *  — Crée un attribut pour l'espace de noms
-     *  @return boolean
-     */
-    function startAttributeNS($prefix,  $name,  $uri)
-    {
-        if (!is_string($prefix)) return false;
-        if (!is_string($name)) return false;
-        if (!is_null($uri) and !is_string($uri)) return false;
-
-        if (strpos($this->stack_end0(), 'ELEMENT') !== 0) return false;
-
-        $this->stack_push(__METHOD__);
-
-        if (!is_null($uri)) {
-            $this->startAttribute('xmlns$'.$prefix);
-            $this->text($uri);
-            $this->endAttribute();
-        }
-        $this->startAttribute($prefix.'$'.$name);
-
-        return true;
-    }
-    /**
-     *  — Crée un attribut
-     *  @return boolean
-     */
-    function startAttribute($name)
-    {
-        if (!is_string($name)) return false;
-
-        if (strpos($this->stack_end0(), 'ELEMENT') !== 0) return false;
-        $this->stack_push(__METHOD__);
-
-        $this->_k($name);
-        return true;
-    }
-    /**
      *  — Crée une balise CDATA
      *  @return boolean
      */
@@ -374,7 +361,7 @@ class JSONWriter
         $this->stack_push(__METHOD__);
         return true;
     }
-  
+
     /**
      *  — Crée une liste d'attributs pour la DTD
      *  @return boolean
@@ -436,21 +423,15 @@ class JSONWriter
         if (!is_string($encoding)) return false;
         if (!is_null($standalone) and !is_bool($standalone)) return false;
 
-
-        $a =& $this->stack_push(__METHOD__);
-
-        $a['version'] = $version;
-        $a['encoding'] = $encoding;
+        $a = array(
+            'version' => $version,
+            'encoding' => $encoding,
+        );
         if (!is_null($standalone)) {
             $a['standalone'] = $standalone ?  'yes' : 'no';
         }
 
-        $this->_ob();
-        $this->_kv('version', $version);
-        $this->_kv('encoding', $encoding);
-        if (!is_null($standalone)) {
-            $this->_kv('standalone', $standalone ?  'yes' : 'no');
-        }
+        $this->stack_push(__METHOD__, $a);
         return true;
     }
     /**
@@ -460,26 +441,7 @@ class JSONWriter
     function startElement($name)
     {
         if (!is_string($name)) return false;
-
-        $a =& $this->stack_end1();
-
-        if (!isset($a[$name])) {
-            $a[$name] = array();
-            $this->stack_push(__METHOD__, $a[$name]);
-        }
-        elseif (!isset($a[$name][0])) {
-            $t = $a['name'];
-            $a[$name] = array($t);
-            $this->stack_push(__METHOD__, $a[$name][0]);
-        }
-        else {
-            $i = count($a[$name]);
-            $a[$name][$i] = array();
-            $this->stack_push(__METHOD__, $a[$name][$i]);
-        }
-
-        $this->_k($name);
-        $this->_ob();
+        $this->stack_push(__METHOD__, array('$n' => $name));
         return true;
     }
     /**
@@ -491,10 +453,37 @@ class JSONWriter
         if (!is_string($prefix)) return false;
         if (!is_string($name)) return false;
         if (!is_string($uri)) return false;
-        $this->stack_push(__METHOD__);
-        $this->_k($prefix.'$'.$name);
-        $this->_ob();
-        $this->_kv('xmlns$'.$prefix, $uri);
+
+        $this->stack_push(__METHOD__, array('$n' => $prefix.'$'.$name));
+
+        return ($this->startAttribute('xmlns$'.$prefix) and $this->text($uri) and $this->endAttribute()) ? true : false;
+    }
+    /**
+     *  — Crée un attribut
+     *  @return boolean
+     */
+    function startAttribute($name)
+    {
+        if (!is_string($name)) return false;
+        if (strpos($this->stack_end0(), 'ELEMENT') !== 0) return false;
+
+        $this->stack_push(__METHOD__, array('$n' => $name));
+        return true;
+    }
+    /**
+     *  — Crée un attribut pour l'espace de noms
+     *  @return boolean
+     */
+    function startAttributeNS($prefix,  $name,  $uri)
+    {
+        if (!is_string($prefix)) return false;
+        if (!is_string($name)) return false;
+        if (!is_null($uri) and !is_string($uri)) return false;
+        if (strpos($this->stack_end0(), 'ELEMENT') !== 0) return false;
+
+        if (!is_null($uri) and !($this->startAttribute('xmlns$'.$prefix) and $this->text($uri) and $this->endAttribute())) 
+            return false;
+        $this->startAttribute($prefix.'$'.$name);
         return true;
     }
     /**
@@ -504,8 +493,7 @@ class JSONWriter
     function startPI($target)
     {
         if (!is_string($target)) return false;
-        $this->stack_push(__METHOD__);
-        $this->target = $target;
+        $this->stack_push(__METHOD__, array('$n' => '<?'.$target));
         return true;
     }
     /**
@@ -517,17 +505,12 @@ class JSONWriter
         if (!is_string($content)) return false;
         if ($this->mute) return true;
 
-        if (strpos($this->stack_end0(), 'ELEMENT') === 0) {
-            $a =& $this->stack_end1();
-            $a['$t'] = $content;
-            $this->_kv('$t', $content);
-        }
-        elseif (strpos($this->stack_end0(), 'ATTRIBUTE') === 0) {
-            $this->_v($content);
-        }
-        elseif (strpos($this->stack_end0(), 'PI') === 0 and $this->target !== '') {
-            $this->_kv('$t', '<?'.$this->target.' '.$content.' ?>');
-        }
+        if (strpos($this->stack_end0(), 'ELEMENT') === 0 
+            or strpos($this->stack_end0(), 'ATTRIBUTE') === 0
+            or strpos($this->stack_end0(), 'PI') === 0) {
+                $a =& $this->stack_end1();
+                $a['$t'] = $content;
+            }
 
         return true;
     }

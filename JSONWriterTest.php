@@ -28,28 +28,30 @@ class JSONWriterTest extends PHPUnit_Framework_TestCase
     {
         $this->assertTrue($this->j->openUri($this->uri));
     }
-//    function test_Document()
-//    {
-//        $this->assertTrue($this->j->openUri($this->uri));
-//        $this->assertTrue($this->j->startDocument('1.0', 'UTF-8'));
-//        $this->assertTrue($this->j->endDocument());
-//        $r = $this->flush_and_get();
-//        $this->assertEquals($r['version'], '1.0');
-//        $this->assertEquals($r['encoding'], 'UTF-8');
-//    }
-//    function test_Element1()
-//    {
-//        $this->assertTrue($this->j->openUri($this->uri));
-//        $this->assertTrue($this->j->startDocument('1.0', 'UTF-8'));
-//        $this->assertTrue($this->j->startElement('Root'));
-//        $this->assertTrue($this->j->endElement());
-//        $this->assertTrue($this->j->endDocument());
-//        $r = $this->flush_and_get();
-//        $this->assertTrue(isset($r['Root']));
-//    }
+    /*
+    function test_Document()
+    {
+        $this->assertTrue($this->j->openUri($this->uri));
+        $this->assertTrue($this->j->startDocument('1.0', 'UTF-8'));
+        $this->assertTrue($this->j->endDocument());
+        $r = $this->flush_and_get();
+        $this->assertEquals($r['version'], '1.0');
+        $this->assertEquals($r['encoding'], 'UTF-8');
+    }
+    function test_Element1()
+    {
+        $this->assertTrue($this->j->openUri($this->uri));
+        $this->assertTrue($this->j->startDocument('1.0', 'UTF-8'));
+        $this->assertTrue($this->j->startElement('Root'));
+        $this->assertTrue($this->j->endElement());
+        $this->assertTrue($this->j->endDocument());
+        $r = $this->flush_and_get();
+        $this->assertTrue(isset($r['Root']));
+    }
     function test_Element2()
     {
         $this->assertTrue($this->j->openUri($this->uri));
+        $this->assertTrue($this->j->setIndent(true));
         $this->assertTrue($this->j->startDocument('1.0', 'UTF-8'));
         $this->assertTrue($this->j->startElement('Root'));
         $this->assertTrue($this->j->startElement('Item'));
@@ -65,7 +67,29 @@ class JSONWriterTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($r['Root']['Item'][0]['$t'], '#1');
         $this->assertEquals($r['Root']['Item'][1]['$t'], '#2');
     }
-    /*
+    function test_Element3()
+    {
+        $this->assertTrue($this->j->openUri($this->uri));
+        $this->assertTrue($this->j->setIndent(true));
+        $this->assertTrue($this->j->startDocument('1.0', 'UTF-8'));
+        $this->assertTrue($this->j->startElement('Root'));
+        $this->assertTrue($this->j->startElement('Item'));
+        $this->assertTrue($this->j->text('#1'));
+        $this->assertTrue($this->j->endElement());
+        $this->assertTrue($this->j->startElement('Item'));
+        $this->assertTrue($this->j->text('#2'));
+        $this->assertTrue($this->j->endElement());
+        $this->assertTrue($this->j->startElement('Item'));
+        $this->assertTrue($this->j->text('#3'));
+        $this->assertTrue($this->j->endElement());
+        $this->assertTrue($this->j->endElement());
+        $this->assertTrue($this->j->endDocument());
+        $r = $this->flush_and_get();
+        $this->assertTrue(isset($r['Root']));
+        $this->assertEquals($r['Root']['Item'][0]['$t'], '#1');
+        $this->assertEquals($r['Root']['Item'][1]['$t'], '#2');
+        $this->assertEquals($r['Root']['Item'][2]['$t'], '#3');
+    }
     function test_ElementNS()
     {
         $this->assertTrue($this->j->openUri($this->uri));
@@ -86,7 +110,7 @@ class JSONWriterTest extends PHPUnit_Framework_TestCase
         $this->assertTrue($this->j->endComment());
         $this->assertTrue($this->j->endDocument());
         $r = $this->flush_and_get();
-        $this->assertNotContains('this a comment', implode('', $r));
+        $this->assertNotContains('this a comment', serialize($r));
     }
     function test_Attribute()
     {
@@ -138,9 +162,46 @@ class JSONWriterTest extends PHPUnit_Framework_TestCase
         $this->assertTrue($this->j->endElement());
         $this->assertTrue($this->j->endDocument());
         $r = $this->flush_and_get();
-        $this->assertEquals($r['Root']['$t'], '<?php '.__METHOD__.' ?>');
+        $this->assertEquals($r['Root']['<?php']['$t'], __METHOD__);
     }
-/*
+    function test_PI2()
+    {
+        $this->assertTrue($this->j->openUri($this->uri));
+        $this->assertTrue($this->j->startDocument('1.0', 'UTF-8'));
+        $this->assertTrue($this->j->startElement('Root'));
+        $this->assertTrue($this->j->startPI('php'));
+        $this->assertTrue($this->j->text(__METHOD__.'#1'));
+        $this->assertTrue($this->j->endPI());
+        $this->assertTrue($this->j->startPI('php'));
+        $this->assertTrue($this->j->text(__METHOD__.'#2'));
+        $this->assertTrue($this->j->endPI());
+       $this->assertTrue($this->j->endElement());
+        $this->assertTrue($this->j->endDocument());
+        $r = $this->flush_and_get();
+        $this->assertEquals($r['Root']['<?php'][0]['$t'], __METHOD__.'#1');
+        $this->assertEquals($r['Root']['<?php'][1]['$t'], __METHOD__.'#2');
+    }
+    function test_PI3()
+    {
+        $this->assertTrue($this->j->openUri($this->uri));
+        $this->assertTrue($this->j->startDocument('1.0', 'UTF-8'));
+        $this->assertTrue($this->j->startElement('Root'));
+        $this->assertTrue($this->j->startPI('php'));
+        $this->assertTrue($this->j->text(__METHOD__.'#1'));
+        $this->assertTrue($this->j->endPI());
+        $this->assertTrue($this->j->startPI('php'));
+        $this->assertTrue($this->j->text(__METHOD__.'#2'));
+        $this->assertTrue($this->j->endPI());
+        $this->assertTrue($this->j->startPI('php'));
+        $this->assertTrue($this->j->text(__METHOD__.'#3'));
+        $this->assertTrue($this->j->endPI());
+        $this->assertTrue($this->j->endElement());
+        $this->assertTrue($this->j->endDocument());
+        $r = $this->flush_and_get();
+        $this->assertEquals($r['Root']['<?php'][0]['$t'], __METHOD__.'#1');
+        $this->assertEquals($r['Root']['<?php'][1]['$t'], __METHOD__.'#2');
+        $this->assertEquals($r['Root']['<?php'][2]['$t'], __METHOD__.'#3');
+    }
     function test_full()
     {
         // from http://www.phpbuilder.com/columns/iceomnia_20090116.php3
@@ -200,8 +261,6 @@ class JSONWriterTest extends PHPUnit_Framework_TestCase
         $this->assertTrue($this->j->endElement());  // rss
         $this->assertTrue($this->j->endDocument());
         $r = $this->flush_and_get();
-
-        var_export($r);
     }
 
     function test_fullbis() {
@@ -242,10 +301,37 @@ class JSONWriterTest extends PHPUnit_Framework_TestCase
         $this->assertTrue($this->j->endElement());
         $this->assertTrue($this->j->endDocument());
         $r = $this->flush_and_get();
-        var_export($r);
     }
-/* */
+     */
 
+    function test_Memory()
+    {
+        $this->assertTrue($this->j->setIndent(true));
+        $this->assertTrue($this->j->setIndentString('.'));
+        $this->assertTrue($this->j->openMemory());
+        $this->assertTrue($this->j->startDocument());
+        $this->assertTrue($this->j->startElement('x'));
+        $this->assertTrue($this->j->startAttribute('x'));
+        $this->assertTrue($this->j->text('x'));
+        $this->assertTrue($this->j->endAttribute());    
+        $this->assertTrue($this->j->startElement('y')); // Doesn't support tag and attr with the same name
+        $this->assertTrue($this->j->text('x'));
+        $this->assertTrue($this->j->endElement());    
+        $this->assertTrue($this->j->endElement()); 
+        $this->assertTrue($this->j->endDocument());
+        $this->assertTrue($this->j->flush() !== false);
+        $r1 = $this->j->outputMemory(false);
+        $r2 = $this->j->outputMemory();
+        $r3 = $this->j->outputMemory();
+        $this->assertTrue($r1 !== false);
+        $this->assertTrue($r2 !== false);
+        $this->assertTrue($r3 !== false);
+        $this->assertEquals($r1, $r2);
+        $this->assertEquals($r3, '');
+        $this->assertEquals("{\n.\"version\": \"1.0\",\n.\"encoding\": \"utf-8\",\n.\"x\": {\n..\"x\": \"x\",\n..\"y\": {\n...\"\$t\": \"x\"\n..}\n.}\n}", $r1);
+    }
+
+    /* */
     private function flush_and_get()
     {
         $r = $this->j->flush();

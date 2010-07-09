@@ -12,7 +12,7 @@
 		<email>nthouvenin@gmail.com</email>
 		<active>yes</active>
 	</lead>
-	<date>2010-07-06</date>
+	<date>2010-07-09</date>
 	<version>
 		<release>1.0.0</release>
 		<api>1.0</api>
@@ -27,6 +27,8 @@
 	</notes>
 	<contents>
 		<dir name="/">
+            <file name="README" role="doc" />
+            <file name="LICENSE" role="doc" />
             <file name="JSONWriter.php" role="php" />
             <file name="JSONWriterTest.php" role="test" />
 		</dir>
