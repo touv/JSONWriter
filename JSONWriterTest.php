@@ -28,7 +28,6 @@ class JSONWriterTest extends PHPUnit_Framework_TestCase
     {
         $this->assertTrue($this->j->openUri($this->uri));
     }
-    /*
     function test_Document()
     {
         $this->assertTrue($this->j->openUri($this->uri));
@@ -302,7 +301,6 @@ class JSONWriterTest extends PHPUnit_Framework_TestCase
         $this->assertTrue($this->j->endDocument());
         $r = $this->flush_and_get();
     }
-     */
 
     function test_Memory()
     {
