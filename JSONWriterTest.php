@@ -28,6 +28,7 @@ class JSONWriterTest extends PHPUnit_Framework_TestCase
     {
         $this->assertTrue($this->j->openUri($this->uri));
     }
+    /**/
     function test_Document()
     {
         $this->assertTrue($this->j->openUri($this->uri));
@@ -204,7 +205,6 @@ class JSONWriterTest extends PHPUnit_Framework_TestCase
     function test_full()
     {
         // from http://www.phpbuilder.com/columns/iceomnia_20090116.php3
-        $writer = new JsonWriter();
         $this->assertTrue($this->j->setIndent(true));
 
         $this->assertTrue($this->j->openUri($this->uri));
@@ -263,8 +263,6 @@ class JSONWriterTest extends PHPUnit_Framework_TestCase
     }
 
     function test_fullbis() {
-
-        $writer = new JsonWriter();
         $this->assertTrue($this->j->setIndent(true));
         $this->assertTrue($this->j->openUri($this->uri));
         $this->assertTrue($this->j->startDocument('1.0', 'utf-8', true));
@@ -301,7 +299,6 @@ class JSONWriterTest extends PHPUnit_Framework_TestCase
         $this->assertTrue($this->j->endDocument());
         $r = $this->flush_and_get();
     }
-
     function test_Memory()
     {
         $this->assertTrue($this->j->setIndent(true));
@@ -330,6 +327,19 @@ class JSONWriterTest extends PHPUnit_Framework_TestCase
     }
 
     /* */
+    function test_nodocument() 
+    {
+        $this->assertTrue($this->j->setIndent(true));
+        $this->assertTrue($this->j->openUri($this->uri));
+        $this->assertTrue($this->j->startElement('Root'));
+        $this->assertTrue($this->j->text(__METHOD__));
+        $this->assertTrue($this->j->endElement());
+        $r = $this->flush_and_get();
+        $this->assertEquals($r['Root']['$t'], __METHOD__);
+    }
+
+
+
     private function flush_and_get()
     {
         $r = $this->j->flush();

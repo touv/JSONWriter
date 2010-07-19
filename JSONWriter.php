@@ -48,6 +48,7 @@
  */
 class JSONWriter
 {
+    protected $n = null;
     protected $r = array();
     protected $h = null;
     protected $b = '';
@@ -172,6 +173,7 @@ class JSONWriter
     function endDocument()
     {
         $this->r = $this->stack_pop();
+        $this->n = null;
         return true;
     }
     /**
@@ -180,22 +182,21 @@ class JSONWriter
      */
     function endElement()
     {
-        $z = $this->stack_pop();
+        $this->r = $this->stack_pop();
         $a =& $this->stack_end1();
-        $n = $z['$n'];
-        unset($z['$n']);
-        if (!isset($a[$n])) {
-            $a[$n] = $z;
+        $this->n = $this->r['$n'];
+        unset($this->r['$n']);
+        if (!isset($a[$this->n])) {
+            $a[$this->n] = $this->r;
         }
-        elseif (key($a[$n]) !== 0) {
-            $b = $a[$n];
-            $a[$n] = array($b, $z);
+        elseif (key($a[$this->n]) !== 0) {
+            $b = $a[$this->n];
+            $a[$this->n] = array($b, $this->r);
         }
         else {
-            $i = count($a[$n]);
-            $a[$n][] = $z;
+            $i = count($a[$this->n]);
+            $a[$this->n][] = $this->r;
         }
-        
         return true;
     }
     /**
@@ -265,9 +266,14 @@ class JSONWriter
     function flush($clear = true)
     {
         if (!is_bool($clear)) return false;
-
         if (is_null($this->stack_end0())) {
-            $this->b = json_encode($this->r);
+
+            if (is_null($this->n)) {
+                $this->b = json_encode($this->r);
+            }
+            else {
+                $this->b = json_encode(array($this->n=>$this->r));
+            }
             if ($clear) $this->r = null;
         }
         else  {
