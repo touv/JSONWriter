@@ -266,7 +266,7 @@ class JSONWriter
     function flush($clear = true)
     {
         if (!is_bool($clear)) return false;
-        if (is_null($this->stack_end0())) {
+        if (is_null($this->stack_end0()) and !is_null($this->r)) {
 
             if (is_null($this->n)) {
                 $this->b = json_encode($this->r);
@@ -274,7 +274,10 @@ class JSONWriter
             else {
                 $this->b = json_encode(array($this->n=>$this->r));
             }
-            if ($clear) $this->r = null;
+            if ($clear) {
+                $this->r = null;
+                $this->n = null;
+            }
         }
         else  {
             return true; //TODO
