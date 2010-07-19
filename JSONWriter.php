@@ -81,8 +81,8 @@ class JSONWriter
 
     protected function stack_end0()
     {
-        list($r,) = end($this->stack);
-        return $r;
+        $r = end($this->stack);
+        if(isset($r[0])) return $r[0];
     }
 
     protected function &stack_end1()
