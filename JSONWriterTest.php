@@ -326,7 +326,6 @@ class JSONWriterTest extends PHPUnit_Framework_TestCase
         $this->assertEquals("{\n.\"version\": \"1.0\",\n.\"encoding\": \"utf-8\",\n.\"x\": {\n..\"x\": \"x\",\n..\"y\": {\n...\"\$t\": \"x\"\n..}\n.}\n}", $r1);
     }
 
-    /* */
     function test_nodocument() 
     {
         $this->assertTrue($this->j->setIndent(true));
@@ -337,6 +336,86 @@ class JSONWriterTest extends PHPUnit_Framework_TestCase
         $r = $this->flush_and_get();
         $this->assertEquals($r['Root']['$t'], __METHOD__);
     }
+    /* */
+
+     function test_notns() {
+        $this->assertTrue($this->j->setIndent(true));
+        $this->assertTrue($this->j->openUri($this->uri));
+        $this->assertTrue($this->j->startDocument('1.0', 'utf-8', true));
+        $this->assertTrue($this->j->startElement('rdf:RDF'));
+        $this->assertTrue($this->j->writeAttribute('xmlns:skos', 'http://skos'));
+        $this->assertTrue($this->j->writeAttribute('xmlns:tps', 'http://tps'));
+        $this->assertTrue($this->j->writeAttribute('xmlns:tmf', 'http://tmf'));
+        $this->assertTrue($this->j->startElement('skos:Concept'));
+        $this->assertTrue($this->j->writeAttribute('rdf:about', '1'));
+        $this->assertTrue($this->j->startElement('tps:a'));
+        $this->assertTrue($this->j->writeAttribute('xml:lang', 'fr'));
+        $this->assertTrue($this->j->text('1a'));
+        $this->assertTrue($this->j->endElement());
+        $this->assertTrue($this->j->startElement('tps:b'));
+        $this->assertTrue($this->j->writeAttribute('xml:lang', 'fr'));
+        $this->assertTrue($this->j->text('1b'));
+        $this->assertTrue($this->j->endElement());
+        $this->assertTrue($this->j->endElement());
+        $this->assertTrue($this->j->startElement('skos:Concept'));
+        $this->assertTrue($this->j->writeAttribute('rdf:about', '2'));
+        $this->assertTrue($this->j->startElement('tps:a'));
+        $this->assertTrue($this->j->writeAttribute('xml:lang', 'fr'));
+        $this->assertTrue($this->j->text('2a'));
+        $this->assertTrue($this->j->endElement());
+        $this->assertTrue($this->j->startElement('tps:b'));
+        $this->assertTrue($this->j->writeAttribute('xml:lang', 'fr'));
+        $this->assertTrue($this->j->text('2b'));
+        $this->assertTrue($this->j->endElement());
+        $this->assertTrue($this->j->endElement());
+        $this->assertTrue($this->j->endElement());
+        $this->assertTrue($this->j->endDocument());
+        $r = $this->flush_and_get();
+        $this->assertEquals($r['rdf:RDF']['skos:Concept'][0]['rdf:about'], 1);
+        $this->assertEquals($r['rdf:RDF']['skos:Concept'][1]['rdf:about'], 2);
+
+
+    }
+
+    function test_nsnull() {
+        $this->assertTrue($this->j->setIndent(true));
+        $this->assertTrue($this->j->openUri($this->uri));
+        $this->assertTrue($this->j->startDocument('1.0', 'utf-8', true));
+        $this->assertTrue($this->j->startElementNS('rdf', 'RDF', 'http://rdf'));
+        $this->assertTrue($this->j->writeAttributeNS('xmlns', 'skos', null, 'http://skos'));
+        $this->assertTrue($this->j->writeAttributeNS('xmlns', 'tps', null, 'http://tps'));
+        $this->assertTrue($this->j->writeAttributeNS('xmlns', 'tmf', null, 'http://tmf'));
+        $this->assertTrue($this->j->startElementNS('skos', 'Concept', null));
+        $this->assertTrue($this->j->writeAttributeNS('rdf', 'about', null, '1'));
+        $this->assertTrue($this->j->startElementNS('tps', 'a', null));
+        $this->assertTrue($this->j->writeAttributeNS('xml', 'lang', null, 'fr'));
+        $this->assertTrue($this->j->text('1a'));
+        $this->assertTrue($this->j->endElement());
+        $this->assertTrue($this->j->startElementNS('tps', 'b', null));
+        $this->assertTrue($this->j->writeAttributeNS('xml', 'lang', null, 'fr'));
+        $this->assertTrue($this->j->text('1b'));
+        $this->assertTrue($this->j->endElement());
+        $this->assertTrue($this->j->endElement());
+        $this->assertTrue($this->j->startElementNS('skos', 'Concept', null));
+        $this->assertTrue($this->j->writeAttributeNS('rdf', 'about', null, '2'));
+        $this->assertTrue($this->j->startElementNS('tps', 'a', null));
+        $this->assertTrue($this->j->writeAttributeNS('xml', 'lang', null, 'fr'));
+        $this->assertTrue($this->j->text('2a'));
+        $this->assertTrue($this->j->endElement());
+        $this->assertTrue($this->j->startElementNS('tps', 'b', null));
+        $this->assertTrue($this->j->writeAttributeNS('xml', 'lang', null, 'fr'));
+        $this->assertTrue($this->j->text('2b'));
+        $this->assertTrue($this->j->endElement());
+        $this->assertTrue($this->j->endElement());
+        $this->assertTrue($this->j->endElement());
+        $this->assertTrue($this->j->endDocument());
+        $r = $this->flush_and_get();
+        $this->assertEquals($r['rdf$RDF']['skos$Concept'][0]['rdf$about'], 1);
+        $this->assertEquals($r['rdf$RDF']['skos$Concept'][1]['rdf$about'], 2);
+
+    }
+/*     */
+
 
 
 
@@ -346,6 +425,7 @@ class JSONWriterTest extends PHPUnit_Framework_TestCase
         $this->assertTrue($r !== false, 'flush failed !');
         $r = file_get_contents($this->uri);
         $this->assertTrue($r !== false, 'file_get_contents failed !');
+        $this->assertTrue( !empty($r), 'result is empty !');
         $r = json_decode($r, true);
         $this->assertNotNull($r, 'json_decode failed !');
         return $r;

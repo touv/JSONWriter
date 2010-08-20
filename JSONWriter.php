@@ -184,6 +184,7 @@ class JSONWriter
     {
         $this->r = $this->stack_pop();
         $a =& $this->stack_end1();
+        if (!isset($this->r['$n'])) return false;
         $this->n = $this->r['$n'];
         unset($this->r['$n']);
         if (!isset($a[$this->n])) {
@@ -207,6 +208,7 @@ class JSONWriter
     {
         $z = $this->stack_pop();
         $a =& $this->stack_end1();
+        if (!isset($z['$t'])) return false;
         $a[$z['$n']] = $z['$t'];
         return true;
     }
@@ -461,11 +463,11 @@ class JSONWriter
     {
         if (!is_string($prefix)) return false;
         if (!is_string($name)) return false;
-        if (!is_string($uri)) return false;
-
+        if (!is_null($uri) and !is_string($uri)) return false;
         $this->stack_push(__METHOD__, array('$n' => $prefix.'$'.$name));
 
-        return ($this->startAttribute('xmlns$'.$prefix) and $this->text($uri) and $this->endAttribute()) ? true : false;
+        if (is_null($uri)) return true;
+        else return ($this->startAttribute('xmlns$'.$prefix) and (!is_null($uri) and $this->text($uri)) and $this->endAttribute()) ? true : false;
     }
     /**
      *  — Crée un attribut
