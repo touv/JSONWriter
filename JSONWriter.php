@@ -513,7 +513,7 @@ class JSONWriter
      */
     function text($content)
     {
-        if (!is_string($content)) return false;
+        if (!is_string($content) && !is_numeric($content)) return false;
         if ($this->mute) return true;
 
         if (strpos($this->stack_end0(), 'ELEMENT') === 0 
