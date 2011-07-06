@@ -340,7 +340,7 @@ class JSONWriter
      */
     function setIndentString($indentString)
     {
-        if (!is_string($indentString)) return false;
+        if (!self::stringable($indentString)) return false;
         $this->is = $indentString;
         return true;
     }
@@ -379,7 +379,7 @@ class JSONWriter
      */
     function startDTDAttlist($name)
     {
-        if (!is_string($name)) return false;
+        if (!self::stringable($name)) return false;
         $this->stack_push(__METHOD__);
 
         trigger_error(__METHOD__.' is not implemented.', E_USER_WARNING);
@@ -391,7 +391,7 @@ class JSONWriter
      */
     function startDTDElement($qualifiedName)
     {
-        if (!is_string($qualifiedName)) return false;
+        if (!self::stringable($qualifiedName)) return false;
         $this->stack_push(__METHOD__);
 
         trigger_error(__METHOD__.' is not implemented.', E_USER_WARNING);
@@ -403,7 +403,7 @@ class JSONWriter
      */
     function startDTDEntity($name, $isparam)
     {
-        if (!is_string($name)) return false;
+        if (!self::stringable($name)) return false;
         if (!is_bool($isparam)) return false;
         $this->stack_push(__METHOD__);
 
@@ -416,9 +416,9 @@ class JSONWriter
      */
     function startDTD($qualifiedName,  $publicId = null,  $systemId = null)
     {
-        if (!is_string($qualifiedName)) return false;
-        if (!is_null($publicId) and !is_string($publicId)) return false;
-        if (!is_null($systemId) and !is_string($systemId)) return false;
+        if (!self::stringable($qualifiedName)) return false;
+        if (!is_null($publicId) and !self::stringable($publicId)) return false;
+        if (!is_null($systemId) and !self::stringable($systemId)) return false;
         $this->stack_push(__METHOD__);
 
         trigger_error(__METHOD__.' is not implemented.', E_USER_WARNING);
@@ -430,8 +430,8 @@ class JSONWriter
      */
     function startDocument($version = '1.0',  $encoding = 'utf-8', $standalone = null)
     {
-        if (!is_string($version)) return false;
-        if (!is_string($encoding)) return false;
+        if (!self::stringable($version)) return false;
+        if (!self::stringable($encoding)) return false;
         if (!is_null($standalone) and !is_bool($standalone)) return false;
 
         $a = array(
@@ -451,7 +451,7 @@ class JSONWriter
      */
     function startElement($name)
     {
-        if (!is_string($name)) return false;
+        if (!self::stringable($name)) return false;
         $this->stack_push(__METHOD__, array('$n' => $name));
         return true;
     }
@@ -461,9 +461,9 @@ class JSONWriter
      */
     function startElementNS($prefix, $name, $uri)
     {
-        if (!is_string($prefix)) return false;
-        if (!is_string($name)) return false;
-        if (!is_null($uri) and !is_string($uri)) return false;
+        if (!self::stringable($prefix)) return false;
+        if (!self::stringable($name)) return false;
+        if (!is_null($uri) and !self::stringable($uri)) return false;
         $this->stack_push(__METHOD__, array('$n' => $prefix.'$'.$name));
 
         if (is_null($uri)) return true;
@@ -475,7 +475,7 @@ class JSONWriter
      */
     function startAttribute($name)
     {
-        if (!is_string($name)) return false;
+        if (!self::stringable($name)) return false;
         if (strpos($this->stack_end0(), 'ELEMENT') !== 0) return false;
 
         $this->stack_push(__METHOD__, array('$n' => $name));
@@ -487,9 +487,9 @@ class JSONWriter
      */
     function startAttributeNS($prefix,  $name,  $uri)
     {
-        if (!is_string($prefix)) return false;
-        if (!is_string($name)) return false;
-        if (!is_null($uri) and !is_string($uri)) return false;
+        if (!self::stringable($prefix)) return false;
+        if (!self::stringable($name)) return false;
+        if (!is_null($uri) and !self::stringable($uri)) return false;
         if (strpos($this->stack_end0(), 'ELEMENT') !== 0) return false;
 
         if (!is_null($uri) and !($this->startAttribute('xmlns$'.$prefix) and $this->text($uri) and $this->endAttribute())) 
@@ -503,7 +503,7 @@ class JSONWriter
      */
     function startPI($target)
     {
-        if (!is_string($target)) return false;
+        if (!self::stringable($target)) return false;
         $this->stack_push(__METHOD__, array('$n' => '<?'.$target));
         return true;
     }
@@ -513,7 +513,7 @@ class JSONWriter
      */
     function text($content)
     {
-        if (!is_string($content)) return false;
+        if (!self::stringable($content)) return false;
         if ($this->mute) return true;
 
         if (strpos($this->stack_end0(), 'ELEMENT') === 0 
@@ -531,10 +531,10 @@ class JSONWriter
      */
     function writeAttributeNS($prefix, $name, $uri, $content)
     {
-        if (!is_string($prefix)) return false;
-        if (!is_string($name)) return false;
-        if (!is_null($uri) and !is_string($uri)) return false;
-        if (!is_string($content)) return false;
+        if (!self::stringable($prefix)) return false;
+        if (!self::stringable($name)) return false;
+        if (!is_null($uri) and !self::stringable($uri)) return false;
+        if (!self::stringable($content)) return false;
 
         return ($this->startAttributeNS($prefix, $name, $uri) and $this->text($content) and $this->endAttribute()) ? true : false;
     }
@@ -543,8 +543,8 @@ class JSONWriter
      */
     function writeAttribute($name, $content)
     {
-        if (!is_string($name)) return false;
-        if (!is_string($content)) return false;
+        if (!self::stringable($name)) return false;
+        if (!self::stringable($content)) return false;
 
         return ($this->startAttribute($name) and $this->text($content) and $this->endAttribute()) ? true : false;
     }
@@ -554,7 +554,7 @@ class JSONWriter
      */
     function writeCData($content)
     {
-        if (!is_string($content)) return false;
+        if (!self::stringable($content)) return false;
         return ($this->startCData() and $this->text($content) and $this->endCData()) ? true : false;
     }
     /**
@@ -563,7 +563,7 @@ class JSONWriter
      */
     function writeComment($content)
     {
-        if (!is_string($content)) return false;
+        if (!self::stringable($content)) return false;
         return ($this->startComment() and $this->text($content) and $this->endComment()) ? true : false;
     }
     /**
@@ -572,8 +572,8 @@ class JSONWriter
      */
     function writeDTDAttlist($name, $content)
     {
-        if (!is_string($name)) return false;
-        if (!is_string($content)) return false;
+        if (!self::stringable($name)) return false;
+        if (!self::stringable($content)) return false;
 
         trigger_error(__METHOD__.' is not implemented.', E_USER_WARNING);
         return false;
@@ -584,8 +584,8 @@ class JSONWriter
      */
     function writeDTDElement($name, $content)
     {
-        if (!is_string($name)) return false;
-        if (!is_string($content)) return false;
+        if (!self::stringable($name)) return false;
+        if (!self::stringable($content)) return false;
 
         trigger_error(__METHOD__.' is not implemented.', E_USER_WARNING);
         return false;
@@ -596,12 +596,12 @@ class JSONWriter
      */
     function writeDTDEntity($name, $content, $pe, $pubid, $sysid, $ndataid)
     {
-        if (!is_string($name)) return false;
-        if (!is_string($content)) return false;
+        if (!self::stringable($name)) return false;
+        if (!self::stringable($content)) return false;
         if (!is_bool($pe)) return false;
-        if (!is_string($pubid)) return false;
-        if (!is_string($sysid)) return false;
-        if (!is_string($ndataid)) return false;
+        if (!self::stringable($pubid)) return false;
+        if (!self::stringable($sysid)) return false;
+        if (!self::stringable($ndataid)) return false;
 
         trigger_error(__METHOD__.' is not implemented.', E_USER_WARNING);
         return false;
@@ -612,10 +612,10 @@ class JSONWriter
      */
     function writeDTD( string $name, $publicId = null, $systemId = null , $subset = null)
     {
-        if (!is_string($name)) return false;
-        if (!is_null($publicId) and !is_string($publicId)) return false;
-        if (!is_null($systemId) and !is_string($systemId)) return false;
-        if (!is_null($subset) and !is_string($subset)) return false;
+        if (!self::stringable($name)) return false;
+        if (!is_null($publicId) and !self::stringable($publicId)) return false;
+        if (!is_null($systemId) and !self::stringable($systemId)) return false;
+        if (!is_null($subset) and !self::stringable($subset)) return false;
 
         trigger_error(__METHOD__.' is not implemented.', E_USER_WARNING);
         return false;
@@ -626,9 +626,9 @@ class JSONWriter
      */
     function writeElementNS($prefix, $name, $uri, $content = null)
     {
-        if (!is_string($prefix)) return false;
-        if (!is_string($name)) return false;
-        if (!is_null($content) and !is_string($content)) return false;
+        if (!self::stringable($prefix)) return false;
+        if (!self::stringable($name)) return false;
+        if (!is_null($content) and !self::stringable($content)) return false;
         return ($this->startElementNS($prefix, $name, $uri) and $this->text($content) and $this->endElement()) ? true : false;
     }
     /**
@@ -637,8 +637,8 @@ class JSONWriter
      */
     function writeElement($name, $content = null)
     {
-        if (!is_string($name)) return false;
-        if (!is_null($content) and !is_string($content)) return false;
+        if (!self::stringable($name)) return false;
+        if (!is_null($content) and !self::stringable($content)) return false;
         return ($this->startElement($name) and $this->text($content) and $this->endElement()) ? true : false;
     }
     /**
@@ -647,8 +647,8 @@ class JSONWriter
      */
     function writePI($target, $content)
     {
-        if (!is_string($target)) return false;
-        if (!is_string($content)) return false;
+        if (!self::stringable($target)) return false;
+        if (!self::stringable($content)) return false;
         return ($this->startPI($target) and $this->text($content) and $this->endPI()) ? true : false;
     }
     /**
@@ -657,11 +657,28 @@ class JSONWriter
      */
     function writeRaw($content, $isjson = false)
     {
-        if (!is_string($content)) return false;
+        if (!self::stringable($content)) return false;
         if ($isjson or (!$isjson and json_decode($content, true, 1))) 
             $this->b .= $content;
         else 
             $this->b .= json_encode($content);
         return true;
     }
+
+    /**
+     *  — La variable est-elle une string ou peut-elle le devenir
+     *  @param mixed
+     *  @return boolean
+     */
+    static function stringable(&$v)
+    {
+        if (is_string($v))
+            return true;
+        if (is_object($v) and method_exists($v,'__toString')) {
+            $v = strval($v);
+            return true;
+        }
+        return false;
+    }
+
 }
